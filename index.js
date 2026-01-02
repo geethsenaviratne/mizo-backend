@@ -26,6 +26,12 @@ connection.once("open", () => {
 
 app.use(bodyParser.json()); //middleware to parse json body
 
+// request logging for debugging (temporary)
+app.use((req, res, next) => {
+    console.log('REQ', req.method, req.originalUrl, 'auth=', req.headers.authorization);
+    next();
+});
+
 //middleware to verify JWT token for protected routes
 app.use((req, res, next) => {     
  
@@ -54,6 +60,7 @@ app.use('/api/users', userRouter); //use userRouter for /users route
 app.use('/api/orders', orderRouter); //use orderRouter for /orders route
 
 
-app.listen(5000, () => {
-  console.log('Server is running on port 5000');
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
 });
