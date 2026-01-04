@@ -65,4 +65,25 @@ export function deleteProduct (req, res) {
     });
 }
 
+export function updateProduct (req, res) {
 
+    //!isAdmin - check if the logged-in user is an admin (check not an admin)
+    if (!isAdmin(req)) {
+        res.status(403).json({ message: 'Access denied. Please login as administrator to update a product.' });
+        return;
+    }
+
+    const productId = req.params.productId;
+    const updatedData = req.body;
+
+    // FIX: Changed from 'product' (lowercase) to 'Product' (uppercase)
+    Product.updateOne({ productId: productId }, updatedData)
+    .then(() => {
+      res.json({ message: 'Product updated successfully!' });
+    })
+    .catch((error) => {
+        res.status(403).json({ 
+            message: error.message || error
+        });
+    });
+}
