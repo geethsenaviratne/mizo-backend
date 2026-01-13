@@ -1,5 +1,5 @@
 import Order from "../models/order.js";
-import { isCustomer } from "./userController.js";
+import { isAdmin, isCustomer } from "./userController.js";
 import Product from "../models/product.js";
 
 
@@ -14,7 +14,7 @@ export async function createOrder (req, res) {
         // date: -1 means sort in descending order (latest first)
         //limit(1) means take only one document
         const latestOrder = await Order.find().sort({ 
-            date: -1 }).limit(1);
+            orderId: -1 }).limit(1);
 
         let orderId
 
@@ -55,8 +55,8 @@ export async function createOrder (req, res) {
         newProductArray[i] = {
             productId : product.productId,
             name : product.productName,
-            price : product.price,
-            quantity : newOrderData.orderdItems[i].quantity,
+            price : product.lastPrice,
+            quantity : newOrderData.orderdItems[i].qty,
             image : product.images[0]
         }
 
@@ -73,9 +73,12 @@ export async function createOrder (req, res) {
 
         //create new order document from request body (order information)
     const order = new Order(newOrderData); 
-    await order.save();
+    const savedOrder =await order.save();
 
-    res.json ({message: "Order Created"})
+    res.json ({message: "Order Created",
+        order: savedOrder
+    })
+
         
 
     }
@@ -89,11 +92,84 @@ export async function createOrder (req, res) {
 
 export async function getOrders (req, res) {
 
+    
+        
+    
+
     try {
+        if(!isCustomer(req)) {
+        
         const orderList = await Order.find({ email: req.user.email });  
         res.json(orderList); 
+        return;
+        }
+        else if(isAdmin(req)) {
+            const orderList = await Order.find();  
+            res.json(orderList); 
+            return;
+        }
+        else {
+            res.status(403).json({ message: 'Access denied. Please login as customer or administrator to view orders.' });
+            return;
+        }
     }
     catch (error) {
         res.status(500).json({ message: error.message });
     }
 }
+
+export async function getQuote (req, res) {
+
+
+    try {
+      
+        const newOrderData = req.body
+
+        const newProductArray = []
+        let total = 0;
+        let labeledTotal = 0;
+        
+
+        for (let i=0; i < newOrderData.orderdItems.length; i++) {
+
+           const product = await Product.findOne({
+                productId : newOrderData.orderdItems[i].productId
+            })
+
+        if(product == null) {
+            res.json({ message: `Product with ID ${newOrderData.orderdItems[i].productId} not found` })
+            return;
+        }
+
+        labeledTotal += product.price * newOrderData.orderdItems[i].qty
+        total += product.lastPrice * newOrderData.orderdItems[i].qty
+
+        newProductArray[i] = {
+        
+            name : product.productName,
+            price : product.lastPrice,
+            labeledPrice : product.labeledPrice,
+            quantity : newOrderData.orderdItems[i].qty,
+            image : product.images[0]
+        }
+
+    }
+
+    console.log(newProductArray)
+
+    newOrderData.orderdItems = newProductArray
+    newOrderData.total = total
+    newOrderData.labeledTotal = labeledTotal
+
+    res.json ({
+        orderdItems : newProductArray,
+        total : total,
+        labeledTotal : labeledTotal
+    })
+
+    }
+    catch (error) {
+        res.status(500).json({ 
+            message: error.message });
+    }
+   }
