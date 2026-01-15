@@ -170,3 +170,13 @@ export function isCustomer (req) {
             res.json({ message: "Google login failed" });
         }
     }
+
+    export async function getUser(req,res) {
+        if(req.user == null) {
+            res.status(404).json({ message: 'Access denied. Please login to view user details.' });
+            toast.error('Access denied. Please login to view user details.');
+            return;
+        }
+        res.json(req.user);
+        
+    }
