@@ -122,78 +122,86 @@ export function isCustomer (req) {
     return true
 }
 
-    export async function googleLogin(req, res) {
-        const token = req.body.token
+   export async function googleLogin(req, res) {
+    const token = req.body.token;
 
-        //https://www.google.com/oauth2/v3/userinfo
-
-        try {
-            const response = await axios.get ('https://www.googleapis.com/oauth2/v3/userinfo', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            })
-            const email = response.data.email
-            //check if user with this email already exists
-            const usersList= await User.find({ email: email })
-            
-
-            if(usersList.length > 0) {
-                if (userList.isBlocked) {
-    res.json({ message: 'Your account is blocked. Please contact support.' });
-    return;
-}
-                const userList= usersList[0]
-                const token = jwt.sign({
-                    email: userList.email,
-                    firstName: userList.firstName,
-                    lastName: userList.lastName,
-                    isBlocked: userList.isBlocked,
-                    type: userList.type,
-                    profilePicture: userList.profilePicture
-                 }, process.env.SECRET_KEY)
-                
-                 res.json({ message: 'Login successful', 
-                    token: token,
-                    user: {
-                        email: userList.email,
-                        firstName: userList.firstName,
-                        lastName: userList.lastName,
-                        type: userList.type,
-                        profilePicture: userList.profilePicture
-                    }
-                });
+    try {
+        const response = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
+            headers: {
+                'Authorization': `Bearer ${token}`
             }
-
-            else {
-               
-               const newUserData = {
-        email: email,
-        firstName: response.data.given_name,
-        lastName: response.data.family_name,
-        type: "customer",
-        password: "ffffff",
-        profilePicture: response.data.picture
-    };
-
-    const user = new User(newUserData);
-
-    user.save()
-        .then(() => {
-            res.json({
-                message: "User created"
-            });
-        })
-        .catch((error) => {
-            res.json({
-                message: "User not created"
-            });
         });
+        const email = response.data.email;
+        // Check if user with this email already exists
+        const usersList = await User.find({ email: email });
+
+        if (usersList.length > 0) {
+            const user = usersList[0];
+            if (user.isBlocked) {
+                res.json({ message: 'Your account is blocked. Please contact support.' });
+                return;
             }
-        }catch (error) {
-            res.json({ message: "Google login failed" });
+            const jwtToken = jwt.sign({
+                email: user.email,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                isBlocked: user.isBlocked,
+                type: user.type,
+                profilePicture: user.profilePicture
+            }, process.env.SECRET_KEY);
+
+            res.json({
+                message: 'Login successful',
+                token: jwtToken,
+                user: {
+                    email: user.email,
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    type: user.type,
+                    profilePicture: user.profilePicture
+                }
+            });
+        } else {
+            // Create new user
+            const newUserData = {
+                email: email,
+                firstName: response.data.given_name,
+                lastName: response.data.family_name,
+                type: "customer",
+                password: "ffffff", // You may want to generate a random password
+                profilePicture: response.data.picture
+            };
+
+            const user = new User(newUserData);
+
+            await user.save();
+
+            // Generate JWT for new user
+            const jwtToken = jwt.sign({
+                email: user.email,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                isBlocked: user.isBlocked,
+                type: user.type,
+                profilePicture: user.profilePicture
+            }, process.env.SECRET_KEY);
+
+            res.json({
+                message: "User created successfully",
+                token: jwtToken,
+                user: {
+                    email: user.email,
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    type: user.type,
+                    profilePicture: user.profilePicture
+                }
+            });
         }
+    } catch (error) {
+        res.json({ message: "Google login failed" });
     }
+}
 
     export async function getUser(req,res) {
         if(req.user == null) {
