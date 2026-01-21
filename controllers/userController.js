@@ -261,20 +261,27 @@ export function isCustomer (req) {
             await newOTP.save();
 
             await transporter.sendMail({
-        from: `"MIZO BEAUTY" <${process.env.EMAIL}>`,
-        to: email,
-        subject: "Your One-Time Password (OTP)",
-        html: getDesignedEmail({
-        otp: otpCode,
-        purpose: "Secure Login Verification",
-        validityMinutes: 10
-    })
-});
+                from: `"MIZO BEAUTY" <${process.env.EMAIL}>`,
+                to: email,
+                subject: "Your One-Time Password (OTP)",
+                html: getDesignedEmail({
+                    otp: otpCode,
+                    purpose: "Secure Login Verification",
+                    validityMinutes: 10
+                })
+            }, (err, info) => {
+                if (err) {
+                    console.error('Nodemailer error:', err);
+                } else {
+                    console.log('Nodemailer success:', info);
+                }
+            });
 
             res.json({ message: 'OTP sent successfully' });
 
         } catch (error) {
-            res.status(500).json({ message: 'Error sending OTP. Please try again later.' });
+            console.error('sendOTP error:', error);
+            res.status(500).json({ message: 'Error sending OTP. Please try again later.', error: error.toString() });
             return;
         }
     }        
