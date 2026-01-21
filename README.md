@@ -70,7 +70,7 @@ This is the backend for the CBC (Cosmetic Beauty Care) web application, built wi
 
 ## Frontend
 The frontend for this project is available at:
-- **Live Demo:** [https://cbc-frontend-sept.vercel.app/](https://cbc-frontend-sept.vercel.app/)
+- **Live Demo:** [https://cbc-frontend-sept.vercel.app/](https://mizo-beauty.vercel.app/)
 - **Source Code:** [https://github.com/geethsenaviratne/cbc-frontend.git](https://github.com/geethsenaviratne/cbc-frontend.git)
 
 ## Deployment
